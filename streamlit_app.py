@@ -107,7 +107,6 @@ def chatbot_response(new_recommendations, chatbot_reply, chatbot_reply_end):
         render_message(st.session_state.messages[-1], msg_idx)
 
 
-
 def render_message(msg, msg_idx):
     """
     Renders a chat message
@@ -162,9 +161,6 @@ def render_message(msg, msg_idx):
 
 
 # Display chat messages from history on app rerun
-#for msg in st.session_state.messages:
-#    with st.chat_message(msg['role']):
-#        render_message(msg)
 for i, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg['role']):
         render_message(msg, i)
@@ -287,7 +283,6 @@ if user_input := st.chat_input("Start typing ..."):
                     st.session_state.user_profile['last_recommendations'] = new_recommendations
             
     chatbot_response(new_recommendations, chatbot_reply, chatbot_reply_end)
-
 
 
 ###--- Add a Sidebar ---###

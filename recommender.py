@@ -263,10 +263,10 @@ def check_intent(detected_intent, user_input, user_embedding, last_recommendatio
         c_feedback = give_feedback(user_input, last_recommendations)
         # If a list with at least one course (by it's position in the list of recommendations) with a rating (positive/negative) was found in the input, return it with the corresponding reply
         if len(c_feedback) > 0:
-            chatbot_reply = "You gave the following feedback:\n"
+            chatbot_reply = "You gave the following feedback:  \n"
             for (c, f) in c_feedback:
-                chatbot_reply += f"- {current_courses[c]['title']}: {f}\n"
-                chatbot_reply += "\n"
+                chatbot_reply += f"- {current_courses[c]['title']}: {f}  \n"
+                chatbot_reply += "  \n"
             return chatbot_reply, c_feedback
         
         # Otherwise, ask the user to clarify
