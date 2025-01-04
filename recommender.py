@@ -46,8 +46,6 @@ def load_npz_data():
     intent_embeddings = dict(loaded_embeddings['intent'].item())
     return current_embeddings, past_embeddings, intent_embeddings
 
-
-
 def get_past_idx(title):
     """
     Returns the index of a past course given it's title
@@ -121,12 +119,8 @@ def weighted_cosine_similarity(embeddings1, embeddings2):
     }"""
     weights = {
         'title_descr': 0.7,  
-        'module': 0.1, 
-        'home_institute': 0.1,
-        'lecturer_short': 0.04,
-        'area': 0.04,
-        'status': 0.01, 
-        'mode': 0.01,
+        'module': 0.15, 
+        'home_institute': 0.15
     }
     similarities = []
     # Compute the cosine similarity for each of the attributes 
@@ -309,9 +303,10 @@ def find_feedback_courses(sentence):
     # Check if the user mentioned specific positions or ranges
     idx_matches = []
     skip_amount = 0
-    range_start = -1
+    range_start = -5
     for idx, word in enumerate(split_input):
-        position = -1 
+        print(f"Checking word: {word}")
+        position = -5 
         # Skip the word if it was merged with the previous one or was detected to be a range indicator
         if skip_amount > 0:
             skip_amount = skip_amount-1
@@ -321,33 +316,35 @@ def find_feedback_courses(sentence):
             next_merge = " ".join([word, split_input[idx+1]])
             if next_merge in list(merge_numbers):
                 position = int(merge_numbers[next_merge])-1
+                print(f"MERGED POSITION: {position}")
                 skip_amount += 1
             elif word in position_keys:
                 position = int(position_keys[word])-1
         elif word in position_keys:
             position = int(position_keys[word])-1
         # If the last word was detected to be the start of a range, set the range
-        if range_start >= 0:
+        if range_start >= -1:
             if range_start < position:
                 idx_matches += list(range(range_start, position+1))
-                range_start = -1  # Reset the start of the range
+                range_start = -5  # Reset the start of the range
                 continue
             # If the current word is smaller than the previous one, set the previous as a single value
             else:
                 idx_matches.append(range_start)
-                range_start = -1  # Reset the start of the range
+                range_start = -5  # Reset the start of the range
         # If a position was found, check if it is the first number in a range (followed by a range indicator)
-        if position >= 0 and len(split_input) > (idx + skip_amount + 2) and split_input[idx + skip_amount + 1] in ["-", "to"]:
+        if position >= -1 and len(split_input) > (idx + skip_amount + 2) and split_input[idx + skip_amount + 1] in ["-", "to"]:
             range_start = position  # Don't append the range here, as the second number might be a phrase like "second one" that has to be merged first
             skip_amount += 1  # As the next word is a range indicator, it can directly be skipped
         # If the position was not detected to be the start of a range, append it as a single value
-        if range_start == -1 and position >= 0:
+        if range_start == -5 and position >= -1:
             idx_matches.append(position)
     # If a start of a range was detected but no end, append the start as single value
-    if range_start >= 0:
+    if range_start >= -1:
         idx_matches.append(range_start)
     # Remove duplicates
     idx_matches = list(set(idx_matches))
+    print(f"FOUND POSITIONS: {idx_matches}")
     return idx_matches
 
 def sentence_sentiment(sentence):
@@ -431,11 +428,13 @@ def give_feedback(user_input, last_recommendations):
     given_feedback = []
     for s in sentences:
         courses = find_feedback_courses(s)
+        print(f"Found courses: {courses}")
         # If no course was found, skip the sentence
         if len(courses) == 0:  
             continue
         
         c_sentiment = sentence_sentiment(s)
+        print(f"Found sentiment: {c_sentiment}")
 
         # If no sentiment was found, skip the sentence
         if c_sentiment is None:
@@ -457,7 +456,7 @@ def give_feedback(user_input, last_recommendations):
         # If the user specified the positions of the courses they (dis)liked, set each mentioned course separately to the sentiment
         elif isinstance(courses[0], int):
             for i in courses:
-                if i >= 0 and i < len(last_recommendations):
+                if i >= -1 and i < len(last_recommendations):
                     given_feedback.append((last_recommendations[i], c_sentiment))
     return given_feedback
 
@@ -1170,7 +1169,7 @@ def recommend_courses(user_profile, filter_dict, amount=5):
         cleaned_courses = [current_courses[idx] for idx in cleaned_indices]
         filtered_courses = filter_courses(filter_dict, cleaned_courses)
         filtered_indices = [current_courses.index(c[0]) for c in filtered_courses]
-        threshold = 0.6
+        threshold = 0.5
 
         # If there are no courses left that match the current filters, ask the user to remove some filters
         if len(filtered_indices) == 0:
@@ -1187,7 +1186,7 @@ def recommend_courses(user_profile, filter_dict, amount=5):
         else:
             # Decrease threshold if filters are set
             if len(filtered_indices) < len(cleaned_indices):
-                threshold = 0.5
+                threshold = 0.4
 
             # Check if the similarity of any of the courses is above the threshold and select the corresponding response to return together with the list of courses to recommend
             print(f"--- Best matches: {[(current_courses[c]['title'], similarities[c]) for c in filtered_indices[:amount]]}")
@@ -1218,5 +1217,6 @@ def recommend_courses(user_profile, filter_dict, amount=5):
             if len(last_recommendations) > 0 and last_recommendations == to_recommend:
                 response = "I couldn't find any new recommendations! Please give me some more information or give feedback for the last recommendations so that I can refine my search."
                 response_end = ""
+                to_recommend = []
         
     return response, response_end, to_recommend, more_info_counter

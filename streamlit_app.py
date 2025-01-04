@@ -292,6 +292,7 @@ st.sidebar.header("Filter Options", help = "To select a filter, you can either s
 # If the user clicks the button "Refresh", try to generate new recommendations
 if st.sidebar.button("Refresh", help=help_text['refresh']):
     try:
+        new_recommendations = []
         reply, reply_end, new_recommendations, st.session_state.user_profile['more_info_counter'] = recommend_courses(user_profile=st.session_state.user_profile, filter_dict=st.session_state.filter_dict)
         chatbot_reply = reply
         chatbot_reply_end = reply_end
