@@ -1,2 +1,5 @@
 streamlit
-openai
+sentence-transformers
+scikit-learn
+langdetect
+sentencepiece
