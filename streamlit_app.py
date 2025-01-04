@@ -79,7 +79,7 @@ def type_response(msg):
     Parameter:
         msg n(str): message to display
     """
-    for word in msg.split():
+    for word in msg.split(" "):
         yield word + " "
         time.sleep(0.025)
 
