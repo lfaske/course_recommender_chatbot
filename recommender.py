@@ -5,22 +5,48 @@ from sklearn.metrics.pairwise import cosine_similarity
 import re
 from chatbot_variables import intent_replies, module_dict
 import string
+import streamlit as st
 
 ### --- Handles data, recommendation generation, feedback interpretation, and user profiles
 
-# Load the pretrained model
-model = SentenceTransformer('paraphrase-distilroberta-base-v1')
 
-# Load the course and embedding data (created and saved in data_prep.py)
-with open("courses.json", "r") as file:
-    courses = json.load(file)
-    current_courses = courses["current"]
-    past_courses = courses["past"]
-    all_attributes = courses["all_attr"]
-loaded_embeddings = np.load('embeddings.npz', allow_pickle=True)
-current_embeddings = dict(loaded_embeddings['current_courses'].item())
-past_embeddings = dict(loaded_embeddings['prev_courses'].item())
-intent_embeddings = dict(loaded_embeddings['intent'].item())
+@st.cache_resource 
+def load_model():
+    # Load the pretrained model
+    model = SentenceTransformer('paraphrase-distilroberta-base-v1')
+    return model
+
+@st.cache_data
+def load_json_data():
+    """
+    Loads and caches the course data from the JSON file.
+
+    Returns:
+        lists with current courses, past courses, and all attributes
+    """
+    # Load the course and embedding data (created and saved in data_prep.py)
+    with open("courses.json", "r") as file:
+        courses = json.load(file)
+        current_courses = courses["current"]
+        past_courses = courses["past"]
+        all_attributes = courses["all_attr"]
+    return current_courses, past_courses, all_attributes
+    
+@st.cache_data
+def load_npz_data():
+    """
+    Loads and caches the embeddings from the NPZ file
+    
+    Returns:
+        dictionaries with embeddings of current courses, past courses, and intents
+    """
+    loaded_embeddings = np.load('embeddings.npz', allow_pickle=True)
+    current_embeddings = dict(loaded_embeddings['current_courses'].item())
+    past_embeddings = dict(loaded_embeddings['prev_courses'].item())
+    intent_embeddings = dict(loaded_embeddings['intent'].item())
+    return current_embeddings, past_embeddings, intent_embeddings
+
+
 
 def get_past_idx(title):
     """
@@ -31,6 +57,7 @@ def get_past_idx(title):
     Returns:
         index (int)
     """
+    _, past_courses, _ = load_json_data()
     idx = [c['title'] for c in past_courses].index(title)
     if isinstance(idx, int):
         return idx
@@ -46,6 +73,7 @@ def get_past_title(idx):
     Returns:
         title (str) of the course
     """
+    _, past_courses, _ = load_json_data()
     if isinstance(idx, int) and idx < len(past_courses):
         return past_courses[idx]['title']
     else:
@@ -60,9 +88,14 @@ def get_details(idx):
     Returns:
         all attributes of the course
     """
+    current_courses, _, _ = load_json_data()
     return current_courses[idx]
 
 def get_all_filter():
+    """
+    Returns all attributes used for filters
+    """
+    _, _, all_attributes = load_json_data()
     filter_attributes = ['status', 'mode', 'ects', 'sws', 'lecturer_short', 'module', 'home_institute', 'language', 'filter_time']
     all_filter = {key: all_attributes[key] for key in filter_attributes}
     return all_filter
@@ -125,6 +158,8 @@ def detect_intent(user_input, last_recommendations):
         intent_replies[detected_intent] or chatbot_reply: the chatbots reply based on the intent it detected
         detected_courses: tuple (course index, x) with x being either the similarity (float) between the title and user input (if detected_intent == reference) or the feedback for the course ('liked' or 'disliked') (if detected_intent == feedback)
     """
+    model = load_model()
+    _, _, intent_embeddings = load_npz_data()
     intent_similarities = {'free_description': 0.0, 'liked_course_reference': 0.0, 'feedback': 0.0}
     user_embedding = model.encode([user_input])[0]
     detected_intent = "other"  # Default intent
@@ -191,6 +226,8 @@ def check_intent(detected_intent, user_input, user_embedding, last_recommendatio
         The reply based on the intent
         The list of found courses (with either a tuple containing the referenced course and the similarity, or tuples with the rated courses and the corresponding ratings)
     """
+    current_courses, past_courses, _ = load_json_data()
+    _, past_embeddings, _ = load_npz_data()
     if detected_intent[0] == "liked_course_reference":
         # First check if a title is spelled out exactly
         best_fit = ("", 0.0)
@@ -441,6 +478,7 @@ def update_user_preferences(user_profile, input_embedding = None, rated_course =
     Returns: 
         updated user_profile
     """
+    current_embeddings, past_embeddings, _ = load_npz_data()
     # If no input_embedding is given, set it to the embedding of the rated course
     if input_embedding is None:
         if rated_course[1] == 'past':
@@ -529,7 +567,7 @@ def input_times(user_input, old_filter):
     # Abbreviations for the days
     weekdays = {'monday': 'Mon.', 'tuesday': 'Tue.', 'wednesday': 'Wed.', 'thursday': 'Thu.', 'friday': 'Fri.', 'saturday': 'Sat.',
                 'every day': 'alldays', 'each day': 'alldays', 'any day': 'alldays', 'all days': 'alldays', 'everyday': 'alldays', 'every single day': 'alldays', 
-                'other\sday': 'otherdays', 'other\sdays': 'otherdays', 'remaining days': 'otherdays'}
+                'other day': 'otherdays', 'other days': 'otherdays', 'remaining days': 'otherdays'}
     all_weekdays = ['Mon.', 'Tue.', 'Wed.', 'Thu.', 'Fri.', 'Sat.']
     
     # Regex pattern to match weekdays (multiple days / ranges as well as individual days)
@@ -757,6 +795,7 @@ def find_modules(user_input, old_filter):
     Returns:
         list of all found modules
     """
+    _, _, all_attributes = load_json_data()
     all_modules = list(set([m.split(" > ")[0].split(",")[0] for m in all_attributes['module']]))
     all_modules.sort()
     modules = []
@@ -840,6 +879,7 @@ def find_attributes(user_input, old_filter_dict):
     Returns:
         dictionary with all found attributes (str) and their values (lists)
     """
+    _, _, all_attributes = load_json_data()
     relevant_attributes = ['status', 'mode', 'ects', 'sws', 'lecturer_short', 'module', 'area', 'home_institute', 'language', 'filter_time']  # filter_time has to be behind ects & sws as otherwise values for those could be misinterpreted as times 
 
     # Get a dictionary containing all possible values for each attribute that is relevant for the similarity calculation and filter
@@ -930,7 +970,6 @@ def find_attributes(user_input, old_filter_dict):
                 else:
                     found_attr[attr].append(v)
     return found_attr
-
 
 
 def check_filter(filter_dict, course):
@@ -1059,6 +1098,7 @@ def input_embedding(user_input, filter_dict):
             input_emb: the embedding of the input (dictionary with the embeddings of each attribute that is used for similarity calculations)
             updated filter_dict
     """
+    model = load_model()
     # Update the selected filters based on the input
     updated_filter_dict = find_attributes(user_input, filter_dict)
 
@@ -1085,6 +1125,8 @@ def recommend_courses(user_profile, filter_dict, amount=5):
             to_recommend: indices of the recommended courses
             more_info_counter: number of times the chatbot asked for more information
     """
+    current_embeddings, _, _ = load_npz_data()
+    current_courses, past_courses, _ = load_json_data()
     user_pref = user_profile['preferences']
     rated_courses = user_profile['rated_courses']
     previously_liked_courses = user_profile['previously_liked_courses']
