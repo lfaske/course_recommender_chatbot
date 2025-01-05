@@ -56,7 +56,7 @@ hints = {
         <p>You can either tell me a course you liked in the past or simply describe what kind of course you are looking for. For example, you could write something like:
         <ul>
             <li>I really liked AI and the Web.</l>
-            <li>I'm interested in </li>
+            <li>I'm interested in computer vision.</li>
         </p>
         <p>Please keep in mind the following tips:</p>
             <ul>
