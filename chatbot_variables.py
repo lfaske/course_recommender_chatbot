@@ -53,7 +53,12 @@ intent_replies = {
 hints = {
     'instructions':
         """<div style="padding-left: 10px; max-width: 100%;">
-        <p>You can either tell me a course you liked in the past or simply describe what kind of course you are looking for. Please keep in mind the following tips:</p>
+        <p>You can either tell me a course you liked in the past or simply describe what kind of course you are looking for. For example, you could write something like:
+        <ul>
+            <li>I really liked AI and the Web.</l>
+            <li>I'm interested in </li>
+        </p>
+        <p>Please keep in mind the following tips:</p>
             <ul>
                 <li>Please write your messages in <u>English</u>, as I do not understand other languages.
                 <li><b>Keep it simple!</b> It's better to write multiple simple messages than to put all the information into a single one.</li>
@@ -72,7 +77,7 @@ hints = {
     'Free Hint':
         """<div style="padding-left: 10px; max-width: 80%;">
             <p>With free descriptions, you can tell me what kind of course you are looking for. You can either tell me topics you are interested in, or specify attributes the recommended courses must have.</p>
-            <p>If you specify attributes over the chat, you will see the ones I detected in the sidebar on the left. There you can also delete selected attributes or select new ones.</p>
+            <p>If you specify attributes over the chat, you will see the ones I detected in the sidebar on the left (if you can't see the sidebar, click on the arrow in the upper left corner to open it). There you can also delete selected attributes or select new ones.</p>
             <p>For example, a free description could look like this:</p>
             <ul>
                 <li><i>I'm looking for a course taking place on mondays or thursdays between 8 am and 4 pm for my Bachelor's elective Philosophy module. Something about the mind and consciousness would be interesting.</i></li>
@@ -100,7 +105,7 @@ hints = {
         """<div style="padding-left: 10px; max-width: 80%;">
                 <ul>
                     <li>When giving feedback, please refer to the course you want to give feedback for by it's <u>position</u> in the list (e.g., <i>the first</i> or <i>course 4</i>).</li>
-                    <li>You can either write the positions separately or give ranges (e.g., <i>courses 1, 2, 3 and 4</i> or <i>courses 1 to 4</i>). You can also tell me if you liked <i>all</i> or <i>none</i> of the recommendations (e.g., <i>I like all of them</i>).</li>
+                    <li>You can either write the positions separately or give ranges (e.g., <i>courses 1, 2, 3 and 4</i> or <i>courses 1 to 4</i>). You can also tell me if you like <i>all</i> or <i>none</i> of the recommendations (e.g., <i>I like all of them</i>).</li>
                     <li>If you want to give both positive and negative feedback, please make sure that you don't write them in the same sentence. Alternatively, you can divide the sentence using <i>but</i>. For example, you could write: <i>I liked the first and third recommendation, but not the second one.</i></li>
                 </ul>
             </div>"""

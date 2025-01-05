@@ -11,7 +11,7 @@ st.title("Course Recommender Bot")
 
 # Initialize the chat history with a welcome message from the chatbot
 if "messages" not in st.session_state:
-    welcome_msg = "Hey, nice to meet you!  \nI'm CouRe, a chatbot designed to help you find interesting courses for the upcoming semester. You can start by either naming a course you liked in the past or describe what kind of course you are looking for. For more detailed instructions, click on the *Instructions* button below."
+    welcome_msg = "Hey, nice to meet you!  \nI'm CouRe, a chatbot designed to help you find interesting courses for the upcoming semester. You can start by either naming a course you liked in the past or describe what kind of course you are looking for. You can also select filters from the sidebar on the left (if you don't see the sidebar, you can open it by clicking on the arrow in the top left corner). For more detailed instructions, click on the *Instructions* button below (you might have to scroll down a bit to see it)."
     #with st.chat_message("assistant"):
     #    first_msg = st.write_stream(type_response(welcome_msg))
     st.session_state.messages = [{"role": "assistant", "content": welcome_msg, "content_end": "", "new_recommendations": []}]
