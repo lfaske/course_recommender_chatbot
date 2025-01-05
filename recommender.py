@@ -98,15 +98,15 @@ def get_all_filter():
     all_filter = {key: all_attributes[key] for key in filter_attributes}
     return all_filter
 
-def weighted_cosine_similarity(embeddings1, embeddings2):
+def weighted_cosine_similarity(user_emb, course_emb):
     """
     Compute the weighted cosine similarity between two embeddings.
     
     Parameters:
-        embeddings1: Dict of attribute embeddings (of a course or input)
-        embeddings2: Dict of attribute embeddings (of a course or input)
+        user_emb: Dict of attribute embeddings of the user preferences
+        course_emb: Dict of attribute embeddings of a course
     Returns:
-        Weighted cosine similarity (float)
+        Weighted cosine similarity (np.float32)
     """
     """weights = {
         'title_descr': 0.7,  
@@ -119,14 +119,14 @@ def weighted_cosine_similarity(embeddings1, embeddings2):
     }"""
     weights = {
         'title_descr': 0.7,  
-        'module': 0.15, 
-        'home_institute': 0.15
+        'module': 0.1, 
+        'home_institute': 0.2
     }
     similarities = []
     # Compute the cosine similarity for each of the attributes 
     for attr, weight in weights.items():
-        u = embeddings1[attr]
-        v = embeddings2[attr]
+        u = user_emb[attr]
+        v = course_emb[attr]
         # Normalize the embeddings
         u_norm = u / np.linalg.norm(u) if np.linalg.norm(u) != 0 else u
         v_norm = v / np.linalg.norm(v) if np.linalg.norm(v) != 0 else v
@@ -954,9 +954,23 @@ def find_attributes(user_input, old_filter_dict):
             found_attr['status'] = list(set(found_status))
             continue
 
-        # Detection of the home institute is not implemented, therefore set it to the previously selected filter (if any was selected from the sidebar)
+        # Use detected home institute only for cosine similarity, but not for filters (as, e.g., 'Artificial Intelligence' or 'Natural Language Processing' could both refer to the home institute or just be a topic the user is interested in (and could also be a topic of courses from other home institutes))
         elif attr == 'home_institute':  
+            # Set the filter for the home institute to the previously selected filter
             found_attr['home_institute'] = old_filter
+            # Check if a home institute (or multiple ones) is mentioned in the input
+            found_home = []
+            for home in all_attributes['home_institute']:
+                if home.lower() in user_input.lower():
+                    found_home.append(home)
+            home_str = ""
+
+            # Turn found home institutes to strings
+            if len(found_home) == 1:
+                home_str = str(found_home[0])
+            elif len(found_home) > 1:
+                home_str = ", ".join(found_home)
+            found_attr['home_institute_sim'] = home_str
             continue
 
         # Check for each other attribute if a new value is found
@@ -983,7 +997,7 @@ def check_filter(filter_dict, course):
     active_filters = 0  # Counts how many filters (attributes) are selected
     for filter_key, filter in filter_dict.items():
         # If the filter has no value, continue with next
-        if not filter:
+        if (not filter) or (filter_key == 'home_institute_sim'):
             continue
         active_filters += 1
 
@@ -1086,13 +1100,14 @@ def filter_courses(filter_dict, courses):
 
 ###--- Recommendation Generation ---###
 
-def input_embedding(user_input, filter_dict):
+def input_embedding(user_input, filter_dict, user_preferences):
     """
     Encodes a given string
 
         Parameters:
             user_input (str): the user's input
             filter_dict (dict): currently set filters
+            user_preferences (dict): current user preferences, embeddings for each relevant attribute
         Returns:
             input_emb: the embedding of the input (dictionary with the embeddings of each attribute that is used for similarity calculations)
             updated filter_dict
@@ -1105,7 +1120,19 @@ def input_embedding(user_input, filter_dict):
     input_emb = {}
     input_emb['title_descr'] = model.encode(str(user_input))
     for attr in ['module', 'home_institute', 'status', 'mode', 'ects', 'sws', 'lecturer_short', 'area', 'filter_time']:
-        input_emb[attr] = model.encode(str(attr))
+        #if attr not in 
+        if attr == 'home_institute':
+            # If a home institute was detected in input (saved as 'home_institute_sim'), use only that for the embedding (filtered home institutes are not that important for similarity, as no courses without them can be recommended anyway (as long as selected))
+            if updated_filter_dict['home_institute_sim'] != "":
+                input_emb[attr] = model.encode(str(updated_filter_dict['home_institute_sim']))
+            # If an embedding for the home institute exists in the user preferences, use that
+            elif (user_preferences is not None) and ('home_institute' in user_preferences):
+                input_emb[attr] = user_preferences['home_institute']
+            # Otherwise, use the selected filter
+            else:
+                input_emb[attr] = model.encode(str(updated_filter_dict[attr]))
+        else:
+            input_emb[attr] = model.encode(str(updated_filter_dict[attr]))
         
     return input_emb, updated_filter_dict
 

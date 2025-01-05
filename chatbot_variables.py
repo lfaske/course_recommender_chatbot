@@ -14,10 +14,12 @@ confirmation_replies = {
 # Define common abbreviations and their full forms
 abbreviations = {
     "AI": "Artificial Intelligence",
+    "KI": "Artificial Intelligence",
     "ML": "Machine Learning",
     "NLP": "Natural Language Processing",
     "NLU": "Natural Language Understanding",
     "LLM": "Large Language Model",
+    "LLMs": "Large Language Models",
     "CL": "Computational Linguistics",
     "CV": "Computer Vision",
     "Coxi": "Cognitive Science",

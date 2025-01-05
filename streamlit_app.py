@@ -249,7 +249,7 @@ if user_input := st.chat_input("Start typing ..."):
 
         # If the user gave a free description, update their preferences and generate new recommendations 
         elif detected_intent == "free_description":
-            input_emb, st.session_state.filter_dict = input_embedding(user_input, st.session_state.filter_dict)  # Compute the embedding of the user's input and get the mentioned attributes for the filter
+            input_emb, st.session_state.filter_dict = input_embedding(user_input, st.session_state.filter_dict, st.session_state.user_profile['preferences'])  # Compute the embedding of the user's input and get the mentioned attributes for the filter
             
             # Check if the user set a time for a new day in the input
             for day, d_time in st.session_state.filter_dict['filter_time'].items():
