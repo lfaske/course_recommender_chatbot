@@ -1,8 +1,8 @@
 # 💬 Course Recommending Chatbot
 
-A chatbot that recommends Cognitive Science courses from the University Osnabrück based on the users preferences.
+A chatbot that recommends Cognitive Science courses from the University Osnabrück based on the users preferences.  
 The user can either describe what kind of course they are looking for (naming topics or defining necessary attributes) or name courses they liked in the past.
-They can also give feedback for recommended courses to improve further recommendations.
+They can also give feedback for recommended courses to improve further recommendations.  
 
 [![Link to the Chatbot](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://recommender-chatbot.streamlit.app/)
 
